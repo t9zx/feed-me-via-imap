@@ -2,6 +2,7 @@ require 'rubygems'
 require 'bundler/setup'
 
 require "log4r"
+require "log4r/configurator"
 
 module FeedMe
   module Utils
@@ -20,3 +21,7 @@ module FeedMe
     end
   end
 end
+
+# as files are loaded only once, we should be safe here and not configure over and over again
+Log4r::Configurator.load_xml_file("#{File.dirname(__FILE__)}/../../../conf/log4r.xml")
+puts "Logger configuration loaded"
