@@ -104,18 +104,14 @@ module FeedMe
         raise ArgumentError, "Expected a FeedMe::Model::Feed object but got #{feed.class.to_s}" unless feed.kind_of?(FeedMe::Model::Feed)
         raise ArgumentError, "Expected Nokogiri::XML::Document or Nokogiri::HTML::Document but got #{feed_xml.class.to_s}" unless feed_xml.instance_of?(Nokogiri::XML::Document) || feed_xml.instance_of?(Nokogiri::HTML::Document)
 
-        logger = FeedMe::Utils::Logger.get(self)
-
         # iterate over each entry, extract the interesting information
         feed_xml.xpath('/rss/channel/item').each do |item|
-          # TODO - this must be more failsafe here
-          title = item.xpath('./title')[0].text
-          body = item.xpath('./description')[0].text
-          uri = URI(item.xpath('./link')[0].text)
-          msg_id = item.xpath('./guid')[0].text
+          title = safe_xpath_text(item, './title', 'Unknown Title')
+          body = safe_xpath_text(item, './description', 'No description given.')
+          uri = URI(safe_xpath_text(item, './link', ''))
+          msg_id = safe_xpath_text(item, './guid', '')
 
-          fi = FeedMe::Model::FeedItem.new(feed, title, body, uri, msg_id)
-          logger.debug{"Retrieved/parsed: #{fi}"}
+          create_feed_item(feed, title, body, uri, msg_id)
         end
       end
 
@@ -126,19 +122,53 @@ module FeedMe
         raise ArgumentError, "Expected a FeedMe::Model::Feed object but got #{feed.class.to_s}" unless feed.kind_of?(FeedMe::Model::Feed)
         raise ArgumentError, "Expected Nokogiri::XML::Document or Nokogiri::HTML::Document but got #{feed_xml.class.to_s}" unless feed_xml.instance_of?(Nokogiri::XML::Document) || feed_xml.instance_of?(Nokogiri::HTML::Document)
 
-        logger = FeedMe::Utils::Logger.get(self)
-
         # iterate over each entry, extract the interesting information
         feed_xml.xpath('/feed/entry').each do |item|
-          # TODO - this must be more failsafe here
-          title = item.xpath('./title')[0].text
-          body = item.xpath('./summary')[0].text
-          uri = URI(item.xpath('./link')[0].text)
-          msg_id = item.xpath('./id')[0].text
+          title = safe_xpath_text(item, './title', 'Unknown Title')
+          body = safe_xpath_text(item, './summary', 'No description given.')
+          uri = URI(safe_xpath_text(item, './link', ''))
+          msg_id = safe_xpath_text(item, './id', '')
 
-          fi = FeedMe::Model::FeedItem.new(feed, title, body, uri, msg_id)
-          logger.debug{"Retrieved/parsed: #{fi}"}
+          create_feed_item(feed, title, body, uri, msg_id)
         end
+      end
+
+      private
+      # Creates a FeedItem with the given information; in case the msg_id is an empty string or nil, then a UUID will be
+      # generated
+      # @param [FeedMe::Model::Feed] feed the feed used
+      # @returns [FeedMe::Model::FeedItem] the FeedItem created
+      def self.create_feed_item(feed, title, body, uri, msg_id)
+        logger = FeedMe::Utils::Logger.get(self)
+
+        if msg_id.empty?
+          logger.warn{"Unable to retrieve a guid for #{item.to_s} - generating one on my own"}
+          msg_id = UUIDTools::UUID.timestamp_create.to_s
+        end
+
+        ret_val = FeedMe::Model::FeedItem.new(feed, title, body, uri, msg_id)
+        logger.debug{"Retrieved/parsed: #{ret_val}"}
+
+        return ret_val
+      end
+
+      # Returns the text content of the node specified by xpath from xml
+      # @param [Nokogiri::XML::Element, Nokogiri::XML::Document, Nokogiri::HTML::Document] the XML document
+      # @param [String] xpath the XPath to retrieve
+      # @param [String] default_value returned in case the Xpath is not found
+      # @return [String] the text found or the default value in case the node was not found
+      def self.safe_xpath_text(xml, xpath, default_value)
+        logger = FeedMe::Utils::Logger.get(self)
+
+        ret_val = nil
+        begin
+          ret_val = (val = xml.xpath(xpath)[0]).nil? ? default_value : val.text
+        rescue Exception => ex
+          logger.error{"Exception caught while getting element: #{ex.message}#{$/}#{ex.backtrace.join($/)}"}
+          ret_val = default_value
+        end
+
+        return ret_val
       end
     end
   end
