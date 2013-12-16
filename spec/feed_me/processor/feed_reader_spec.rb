@@ -11,6 +11,7 @@ module FeedMe
     describe FeedReader do
 
       let(:feed_uri) {URI("http://localhost:1234/foobar")}
+      let(:feed_uri_redirected) {URI("http://localhost:1234/foobar_redirected")}
       let(:feed_content_rss) {IO.read("#{File.dirname(__FILE__)}/../../fixtures/sample-rss.xml")}
       let(:feed_content_atom) {IO.read("#{File.dirname(__FILE__)}/../../fixtures/sample-atom.xml")}
       let(:feed_rss) {FeedMe::Model::Feed.new(FeedMe::Model::Feed::RSS, feed_uri)}
@@ -18,6 +19,15 @@ module FeedMe
 
       it "is possible to retrieve a RSS feed" do
         stub_request(:get, feed_uri.to_s).to_return(:body => feed_content_rss, :status => 200)
+
+        expect {
+          FeedMe::Processor::FeedReader.retrieve_feed(feed_rss)
+        }.not_to raise_error
+      end
+
+      it "is possible to retrieve a RSS feed with a redirect" do
+        stub_request(:get, feed_uri.to_s).to_return(:body => "", :status => 302, :headers => { 'Location' => feed_uri_redirected.to_s})
+        stub_request(:get, feed_uri_redirected.to_s).to_return(:body => feed_content_rss, :status => 200)
 
         expect {
           FeedMe::Processor::FeedReader.retrieve_feed(feed_rss)

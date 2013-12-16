@@ -60,11 +60,16 @@ module FeedMe
         begin
           logger.debug{"Requesting #{feed_uri.to_s}"}
           response = Net::HTTP.get_response(feed_uri)
-          if response.instance_of?(Net::HTTPOK)
-            logger.debug{"Received HTTPOK response"}
-            ret_val = response.body
-          else
-            logger.warn{"Received response: #{response.class} (#{response.code})"}
+          case response
+            when Net::HTTPSuccess
+              logger.debug{"Received HTTPSuccess response"}
+              ret_val = response.body
+            when Net::HTTPRedirection
+              # TODO this can yield to infinite calls; limit this
+              logger.debug{"Redirected to #{response['location']}"}
+              ret_val = retrieve_feed_content(URI(response['location']))
+            else
+              logger.warn{"Received response: #{response.class} (#{response.code})"}
           end
         rescue Exception => ex
           msg = "While trying to read #{feed_uri.to_s} the following exception was encountered: #{ex.message}"
@@ -86,12 +91,15 @@ module FeedMe
 
         ret_val = nil
         begin
-          logger.debug{"Trying to parse XML string: #{xml_string.to_s}"}
+          logger.debug{"Trying to parse XML data"}
           ret_val = Nokogiri.parse(xml_string.to_s)
           logger.debug{"Successfully parsed"}
         rescue Exception => ex
-          logger.warn{"Exception while parsing XML: #{ex.message}"}
-          raise FeedMe::ParsingException, ex.message
+          msg = "Exception while parsing XML: #{ex.message}" << $/
+          msg << "for the following XML" << $/
+          msg << xml_string
+          logger.warn{msg}
+          raise FeedMe::ParsingException, msg
         end
 
         return ret_val
@@ -99,7 +107,7 @@ module FeedMe
 
       # Iterates over the items from the feed and creates FeedItem for the feed
       # @param [FeedMe::Model::Feed] feed the feed to read
-      # @param [Nokogiri::XML::Document, Nokogiri::HTML::Document] feed_xml
+      # @param [Nokogiri::XML::Document, Nokogiri::HTML::Document] feed_xml the XML document to parse for RSS
       def self.process_rss_feed(feed, feed_xml)
         raise ArgumentError, "Expected a FeedMe::Model::Feed object but got #{feed.class.to_s}" unless feed.kind_of?(FeedMe::Model::Feed)
         raise ArgumentError, "Expected Nokogiri::XML::Document or Nokogiri::HTML::Document but got #{feed_xml.class.to_s}" unless feed_xml.instance_of?(Nokogiri::XML::Document) || feed_xml.instance_of?(Nokogiri::HTML::Document)
@@ -117,7 +125,7 @@ module FeedMe
 
       # Iterates over the items from the feed and creates FeedItem for the feed
       # @param [FeedMe::Model::Feed] feed the feed to read
-      # @param [Nokogiri::XML::Document, Nokogiri::HTML::Document] feed_xml
+      # @param [Nokogiri::XML::Document, Nokogiri::HTML::Document] feed_xml the XML document to parse for ATOM
       def self.process_atom_feed(feed, feed_xml)
         raise ArgumentError, "Expected a FeedMe::Model::Feed object but got #{feed.class.to_s}" unless feed.kind_of?(FeedMe::Model::Feed)
         raise ArgumentError, "Expected Nokogiri::XML::Document or Nokogiri::HTML::Document but got #{feed_xml.class.to_s}" unless feed_xml.instance_of?(Nokogiri::XML::Document) || feed_xml.instance_of?(Nokogiri::HTML::Document)
@@ -147,7 +155,6 @@ module FeedMe
         end
 
         ret_val = FeedMe::Model::FeedItem.new(feed, title, body, uri, msg_id)
-        logger.debug{"Retrieved/parsed: #{ret_val}"}
 
         return ret_val
       end
