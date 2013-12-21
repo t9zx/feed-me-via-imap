@@ -8,7 +8,7 @@ module FeedMe
     describe FeedItem do
 
       before(:each) do
-        @feed = FeedMe::Model::Feed.new(FeedMe::Model::Feed::RSS, URI("http://localhost"))
+        @feed = FeedMe::Model::Feed.new(URI("http://localhost"))
         @feed_item = FeedMe::Model::FeedItem.new(@feed, "title", "body", URI("http://localhost/foo"), "12345")
       end
 

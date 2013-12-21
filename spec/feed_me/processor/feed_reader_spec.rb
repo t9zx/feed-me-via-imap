@@ -14,8 +14,8 @@ module FeedMe
       let(:feed_uri_redirected) {URI("http://localhost:1234/foobar_redirected")}
       let(:feed_content_rss) {IO.read("#{File.dirname(__FILE__)}/../../fixtures/sample-rss.xml")}
       let(:feed_content_atom) {IO.read("#{File.dirname(__FILE__)}/../../fixtures/sample-atom.xml")}
-      let(:feed_rss) {FeedMe::Model::Feed.new(FeedMe::Model::Feed::RSS, feed_uri)}
-      let(:feed_atom) {FeedMe::Model::Feed.new(FeedMe::Model::Feed::ATOM, feed_uri)}
+      let(:feed_rss) {FeedMe::Model::Feed.new(feed_uri)}
+      let(:feed_atom) {FeedMe::Model::Feed.new(feed_uri)}
 
       it "is possible to retrieve a RSS feed" do
         stub_request(:get, feed_uri.to_s).to_return(:body => feed_content_rss, :status => 200)
