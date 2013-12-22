@@ -1,5 +1,7 @@
 imap:
   server: imap_server
+  port: 143
+  ssl: false
   user: imap_user
   password: imap_password
 

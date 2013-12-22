@@ -35,6 +35,7 @@ module FeedMe
 
     end
 
+    # TODO - Move to excpetion directory
     class ConfigKeyNotFoundError < StandardError
     end
   end
