@@ -1,5 +1,7 @@
 require_relative "../../spec_helper"
 
+require 'uuidtools'
+
 require_relative "../../../lib/feed_me/processor/imap_syncer"
 require_relative "../../../lib/feed_me/config/config"
 
@@ -127,6 +129,101 @@ module FeedMe
             @imap.logout
           }.to raise_error(FeedMe::ImapException)
         end
+      end
+
+      context "allows storing of messagges" do
+        let(:folder_name) {"RSpec/ImapSyncerSpec"}
+        let(:subject) {"Subject #{Time.now.utc.to_s}"}
+        let(:time) {Time.now.utc}
+        let(:body) {"Body of the email #{Time.now.utc.to_s}"}
+        before(:each) do
+          @imap = FeedMe::Processor::ImapSyncer.new(imap_server, imap_user, imap_pass, imap_port, imap_ssl)
+        end
+
+        context "will complain in case the passed parameters are not correct" do
+          it "folder_name must be proper" do
+            @imap.login
+            expect {
+              @imap.send(:store_message, nil, subject, time, body)
+            }.to raise_error(ArgumentError)
+
+            expect {
+              @imap.send(:store_message, 1, subject, time, body)
+            }.to raise_error(ArgumentError)
+          end
+
+          it "subject must be proper" do
+            @imap.login
+            expect {
+              @imap.send(:store_message, folder_name, nil, time, body)
+            }.to raise_error(ArgumentError)
+
+            expect {
+              @imap.send(:store_message, folder_name, 1, time, body)
+            }.to raise_error(ArgumentError)
+
+          end
+
+          it "time must be proper" do
+            @imap.login
+            expect {
+              @imap.send(:store_message, folder_name, subject, nil, body)
+            }.to raise_error(ArgumentError)
+
+            expect {
+              @imap.send(:store_message, folder_name, subject, 1, body)
+            }.to raise_error(ArgumentError)
+          end
+
+          it "body must be proper" do
+            @imap.login
+            expect {
+              @imap.send(:store_message, folder_name, subject, time, nil)
+            }.to raise_error(ArgumentError)
+
+            expect {
+              @imap.send(:store_message, folder_name, subject, time, 1)
+            }.to raise_error(ArgumentError)
+          end
+
+        end
+
+        it "it will complain in case we are not yet logged in" do
+          expect {
+            @imap.send(:store_message, folder_name, subject, time, body)
+          }.to raise_error(FeedMe::ImapException)
+        end
+
+        it "will store a sample message" do
+          expect {
+            @imap.login
+            @imap.send(:store_message, folder_name, subject, time, body)
+          }.to_not raise_error
+        end
+
+        it "will create a folder in case it doesn't exist yet" do
+          expect {
+            unique_folder_name = "#{folder_name}/#{UUIDTools::UUID.timestamp_create.to_s}"
+            @imap.login
+            @imap.send(:store_message, unique_folder_name, subject, time, body)
+          }.to_not raise_error
+        end
+
+        context "#create_message" do
+          it "returns a valid formatted message" do
+            msg_manual = <<EOS
+Subject: #{subject}
+From: sender@localhost
+To: recipient@localhost
+
+#{body}
+EOS
+
+            msg = @imap.send(:create_message, subject, "sender@localhost", "recipient@localhost", time, body)
+            expect(msg).to eq(msg_manual.gsub(/\r\n?|\n/, "\r\n"))
+          end
+        end
+
       end
     end
   end

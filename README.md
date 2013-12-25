@@ -18,3 +18,8 @@ GIT Branching Strategy
 ======================
 
 This projects uses the following branching strategy: http://nvie.com/posts/a-successful-git-branching-model/
+
+Caveats
+=======
+
+* We will use the '/' as a hierarchy seperator and map it to the IMAP specific one (e.g. '.', or '/', ...). If your IMAP server uses e.g. '.' as seperator and you pass "Foo.Bar/Baz" it will create a hierarchy as follows: "Foo/Bar/Baz" - there is no easy way around this for the time being
