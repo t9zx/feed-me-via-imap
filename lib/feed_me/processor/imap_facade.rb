@@ -8,7 +8,7 @@ require_relative '../exceptions/feed_me_error'
 
 module FeedMe
   module Processor
-    class ImapSyncer
+    class ImapFacade
       HIERARCHY_DELIMITER = '/'
 
       # Synchronizes a given Feed (with it's FeedItems) with an IMAP Server
