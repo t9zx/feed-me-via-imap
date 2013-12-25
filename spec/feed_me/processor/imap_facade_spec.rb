@@ -132,7 +132,7 @@ module FeedMe
       end
 
       context "allows storing of messagges" do
-        let(:folder_name) {"RSpec/ImapSyncerSpec"}
+        let(:folder_name) {"RSpec/ImapFacadeSpec"}
         let(:subject) {"Subject #{Time.now.utc.to_s}"}
         let(:time) {Time.now.utc}
         let(:body) {"Body of the email #{Time.now.utc.to_s}"}
