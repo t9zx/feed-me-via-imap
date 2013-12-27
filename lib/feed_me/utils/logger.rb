@@ -23,5 +23,6 @@ module FeedMe
 end
 
 # as files are loaded only once, we should be safe here and not configure over and over again
-Log4r::Configurator.load_xml_file("#{File.dirname(__FILE__)}/../../../conf/log4r.xml")
-puts "Logger configuration loaded"
+log4r_config_file = "#{File.dirname(__FILE__)}/../../../conf/log4r.xml"
+Log4r::Configurator.load_xml_file(log4r_config_file)
+puts "Logger '#{log4r_config_file}' configuration loaded"

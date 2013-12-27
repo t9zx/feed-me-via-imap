@@ -14,6 +14,19 @@ Installation Instructions
   * gem install bundler -v "1.3.5"
   * bundle install
 
+Usage
+=====
+
+Setup a config file, use `conf/config_template.yaml` as an example.
+
+Then call from the command line
+
+`bin/feed_me.sh <CONFIG_FILE>`
+
+This will
+* read the feeds you configured
+* will store them on the IMAP server
+
 GIT Branching Strategy
 ======================
 
@@ -23,3 +36,5 @@ Caveats
 =======
 
 * We will use the '/' as a hierarchy seperator and map it to the IMAP specific one (e.g. '.', or '/', ...). If your IMAP server uses e.g. '.' as seperator and you pass "Foo.Bar/Baz" it will create a hierarchy as follows: "Foo/Bar/Baz" - there is no easy way around this for the time being
+* Mailbox names are not converted to UTF-7
+* Handling of special characters (e.g. German umlauts) are not properly handled in the message body

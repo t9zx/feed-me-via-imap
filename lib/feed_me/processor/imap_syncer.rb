@@ -15,6 +15,7 @@ module FeedMe
       # @param [FeedMe::Model::FeedItem] feed_item the item to store
       # @param [String] folder_name the folder where to store the item
       def store_item(feed_item, folder_name)
+        @logger.info{"Storing item #{feed_item} at #{folder_name}"}
         store_message(folder_name, feed_item.title, feed_item.ts, format_feed_item_body(feed_item), "#{feed_item.msg_id}@feed-me-via-imap.localhost")
       end
 

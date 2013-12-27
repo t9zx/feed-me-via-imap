@@ -78,6 +78,11 @@ module FeedMe
         @logged_in = false
       end
 
+      # @return [Boolean] true if logged in, false if not logged in
+      def logged_in?
+        return @logged_in
+      end
+
       protected
       # Stores an message at the IMAP server in the given folder; in case the folder doesn't exist, it will create this folder
       # We will use the '/' as a hierarchy seperator and map it to the IMAP specific one (e.g. '.', or '/', ...). If your IMAP server uses e.g. '.' as
@@ -106,7 +111,7 @@ module FeedMe
           folder_array.each_index do |idx|
             new_folder_name = folder_array[0..idx].join(@imap_delimiter)
             if @imap.list("", new_folder_name)
-              @logger.info{"Folder '#{new_folder_name}' already exists, no need to create it again"}
+              @logger.debug{"Folder '#{new_folder_name}' already exists, no need to create it again"}
             else
               @logger.debug{"Trying to create folder: '#{new_folder_name}'"}
               @imap.create(new_folder_name)

@@ -114,20 +114,26 @@ module FeedMe
         end
 
         it "allows me to logout in case I'm logged in and won't allow me to call it a 2nd time" do
+          expect(@imap.logged_in?).to be_false
           expect {
             @imap.login
+            expect(@imap.logged_in?).to be_true
             @imap.logout
           }.to_not raise_error
+          expect(@imap.logged_in?).to be_false
 
           expect {
             @imap.logout
           }.to raise_error(FeedMe::ImapException)
+          expect(@imap.logged_in?).to be_false
         end
 
         it "will complain in case I'm not logged in" do
+          expect(@imap.logged_in?).to be_false
           expect {
             @imap.logout
           }.to raise_error(FeedMe::ImapException)
+          expect(@imap.logged_in?).to be_false
         end
       end
 
@@ -201,9 +207,11 @@ module FeedMe
         end
 
         it "it will complain in case we are not yet logged in" do
+          expect(@imap.logged_in?).to be_false
           expect {
             @imap.send(:store_message, folder_name, subject, time, body, msg_id)
           }.to raise_error(FeedMe::ImapException)
+          expect(@imap.logged_in?).to be_false
         end
 
         it "will store a sample message" do
