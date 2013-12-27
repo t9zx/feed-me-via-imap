@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'bundler/setup'
 
+require "date"
 require 'net/imap'
 
 require_relative '../exceptions/imap_exception'
@@ -83,16 +84,18 @@ module FeedMe
       # seperator and you pass "Foo.Bar/Baz" it will create a hierarchy as follows: "Foo/Bar/Baz" - there is no easy way around this for the time being
       # @param [String] folder_name the name of the IMAP folder; a '/' in the text indicates a child entry; thus "Foo/bar" is a folder structure Foo/bar
       # @param [String] subject the subject of the email
-      # @param [Time] time the time we want to set on the email
+      # @param [DateTime] time the time we want to set on the email
       # @param [String] body the email body
+      # @param [String] msg_id unique ID of this message
       # @throws [ArgumentError] in case we are not yet logged in
       # @throws [FeedMe::ImapException] in case we are not yet logged in
       # @throws [FeedMe::ImapException] in case we encounter any issues creating a message on the server
-      def store_message(folder_name, subject, time, body)
+      def store_message(folder_name, subject, time, body, msg_id)
         raise ArgumentError, "folder_name must not be nil and of type String (got: '#{folder_name.class.to_s}'" unless !folder_name.nil? && folder_name.instance_of?(String)
         raise ArgumentError, "subject must not be nil and of type String (got: '#{subject.class.to_s}'" unless !subject.nil? && subject.instance_of?(String)
-        raise ArgumentError, "time must not be nil and of type Time (got: '#{time.class.to_s}'" unless !time.nil? && time.instance_of?(Time)
+        raise ArgumentError, "time must not be nil and of type DateTime (got: '#{time.class.to_s}'" unless !time.nil? && time.instance_of?(DateTime)
         raise ArgumentError, "body must not be nil and of type String (got: '#{body.class.to_s}'" unless !body.nil? && body.instance_of?(String)
+        raise ArgumentError, "msg_id must not be nil and of type String (got: '#{msg_id.class.to_s}'" unless !msg_id.nil? && msg_id.instance_of?(String)
 
         raise FeedMe::ImapException, "You are not yet logged in, please login first" unless @logged_in
 
@@ -116,8 +119,8 @@ module FeedMe
           @imap.list("", folder_name_normalized)
 
           # now we will append the new message to the folder
-          msg = create_message(subject, "sender@localhost", "recipient@localhost", time, body)
-          @imap.append(folder_name_normalized, msg, nil, time)
+          msg = create_message(subject, "sender@localhost", "recipient@localhost", time, body, msg_id)
+          @imap.append(folder_name_normalized, msg, nil, time.to_time)
         rescue => ex
           msg = "Encountered error while storing message with subject '#{subject}' in the IMAP server: #{ex.message}#{$/}#{ex.backtrace.join($/)}"
           raise FeedMe::ImapException, msg
@@ -130,13 +133,16 @@ module FeedMe
       # @param [String] subject the subject of the message
       # @param [String] from the sender
       # @param [String] to the recipient
-      # @param [Time] time the time of the message
+      # @param [DateTime] time the time of the message
       # @param [String] body the body of the message
-      def create_message(subject, from, to, time, body)
+      # @param [String] msg_id unique message ID
+      def create_message(subject, from, to, time, body, msg_id)
         ret_val = <<EOS
 Subject: #{subject}
 From: #{from}
 To: #{to}
+Message-ID: #{msg_id}
+Date: #{time.rfc2822}
 
 #{body}
 EOS

@@ -134,8 +134,9 @@ module FeedMe
       context "allows storing of messagges" do
         let(:folder_name) {"RSpec/ImapFacadeSpec"}
         let(:subject) {"Subject #{Time.now.utc.to_s}"}
-        let(:time) {Time.now.utc}
+        let(:time) {DateTime.parse("2003-12-13T18:30:02Z")}
         let(:body) {"Body of the email #{Time.now.utc.to_s}"}
+        let(:msg_id) {"#{UUIDTools::UUID.timestamp_create}@feed-me-via-imap.localhost"}
         before(:each) do
           @imap = FeedMe::Processor::ImapFacade.new(imap_server, imap_user, imap_pass, imap_port, imap_ssl)
         end
@@ -144,22 +145,22 @@ module FeedMe
           it "folder_name must be proper" do
             @imap.login
             expect {
-              @imap.send(:store_message, nil, subject, time, body)
+              @imap.send(:store_message, nil, subject, time, body, msg_id)
             }.to raise_error(ArgumentError)
 
             expect {
-              @imap.send(:store_message, 1, subject, time, body)
+              @imap.send(:store_message, 1, subject, time, body, msg_id)
             }.to raise_error(ArgumentError)
           end
 
           it "subject must be proper" do
             @imap.login
             expect {
-              @imap.send(:store_message, folder_name, nil, time, body)
+              @imap.send(:store_message, folder_name, nil, time, body, msg_id)
             }.to raise_error(ArgumentError)
 
             expect {
-              @imap.send(:store_message, folder_name, 1, time, body)
+              @imap.send(:store_message, folder_name, 1, time, body, msg_id)
             }.to raise_error(ArgumentError)
 
           end
@@ -167,22 +168,33 @@ module FeedMe
           it "time must be proper" do
             @imap.login
             expect {
-              @imap.send(:store_message, folder_name, subject, nil, body)
+              @imap.send(:store_message, folder_name, subject, nil, body, msg_id)
             }.to raise_error(ArgumentError)
 
             expect {
-              @imap.send(:store_message, folder_name, subject, 1, body)
+              @imap.send(:store_message, folder_name, subject, 1, body, msg_id)
             }.to raise_error(ArgumentError)
           end
 
           it "body must be proper" do
             @imap.login
             expect {
-              @imap.send(:store_message, folder_name, subject, time, nil)
+              @imap.send(:store_message, folder_name, subject, time, nil, msg_id)
             }.to raise_error(ArgumentError)
 
             expect {
-              @imap.send(:store_message, folder_name, subject, time, 1)
+              @imap.send(:store_message, folder_name, subject, time, 1, msg_id)
+            }.to raise_error(ArgumentError)
+          end
+
+          it "msg_id must be proper" do
+            @imap.login
+            expect {
+              @imap.send(:store_message, folder_name, subject, time, body, nil)
+            }.to raise_error(ArgumentError)
+
+            expect {
+              @imap.send(:store_message, folder_name, subject, time, body, 1)
             }.to raise_error(ArgumentError)
           end
 
@@ -190,14 +202,14 @@ module FeedMe
 
         it "it will complain in case we are not yet logged in" do
           expect {
-            @imap.send(:store_message, folder_name, subject, time, body)
+            @imap.send(:store_message, folder_name, subject, time, body, msg_id)
           }.to raise_error(FeedMe::ImapException)
         end
 
         it "will store a sample message" do
           expect {
             @imap.login
-            @imap.send(:store_message, folder_name, subject, time, body)
+            @imap.send(:store_message, folder_name, subject, time, body, msg_id)
           }.to_not raise_error
         end
 
@@ -205,7 +217,7 @@ module FeedMe
           expect {
             unique_folder_name = "#{folder_name}/#{UUIDTools::UUID.timestamp_create.to_s}"
             @imap.login
-            @imap.send(:store_message, unique_folder_name, subject, time, body)
+            @imap.send(:store_message, unique_folder_name, subject, time, body, msg_id)
           }.to_not raise_error
         end
 
@@ -215,11 +227,13 @@ module FeedMe
 Subject: #{subject}
 From: sender@localhost
 To: recipient@localhost
+Message-ID: foobar@localhost
+Date: #{time.rfc2822}
 
 #{body}
 EOS
 
-            msg = @imap.send(:create_message, subject, "sender@localhost", "recipient@localhost", time, body)
+            msg = @imap.send(:create_message, subject, "sender@localhost", "recipient@localhost", time, body, "foobar@localhost")
             expect(msg).to eq(msg_manual.gsub(/\r\n?|\n/, "\r\n"))
           end
         end

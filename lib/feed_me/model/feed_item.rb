@@ -8,7 +8,7 @@ module FeedMe
   module Model
     class FeedItem
 
-      attr_reader :title, :body, :uri, :msg_id
+      attr_reader :title, :body, :uri, :msg_id, :ts
 
       # Represents an item from a feed
       # @param [FeedMe::Model::Feed] feed the feed to which this item belongs
