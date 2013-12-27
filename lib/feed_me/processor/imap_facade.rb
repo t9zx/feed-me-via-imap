@@ -130,7 +130,51 @@ module FeedMe
           msg = "Encountered error while storing message with subject '#{subject}' in the IMAP server: #{ex.message}#{$/}#{ex.backtrace.join($/)}"
           raise FeedMe::ImapException, msg
         end
+      end
 
+      # Determines if a message identified by it's Message-ID exists in the given folder
+      # @param [String] folder_name then name of the folder where the message is stored
+      # @param [String] msg_id the Message-ID to identify the message
+      # @throws [ArgumentError] in case the passed parameters are not proper
+      # @return [Boolean] true if such a message was found; false if not found
+      def message_exists?(folder_name, msg_id)
+        raise ArgumentError, "folder_name must be not nil and a String (got: '#{msg_id.class.to_s}')" unless !folder_name.nil? && folder_name.instance_of?(String)
+        raise ArgumentError, "msg_id must be not nil and a String (got: '#{msg_id.class.to_s}')" unless !msg_id.nil? && msg_id.instance_of?(String)
+
+        raise FeedMe::ImapException, "You are not yet logged in, please login first" unless @logged_in
+
+        @logger.debug{"Determining if '#{folder_name}' contains message with ID #{msg_id}"}
+
+        # Return with false in case the folder doesn't exist at all
+        unless @imap.list("", normalized_folder_name(folder_name))
+          @logger.debug{"The folder '#{folder_name}' doesn't exist; thus the message '#{msg_id}' can't exist either"}
+          return false
+        end
+
+        @imap.select(normalized_folder_name(folder_name))
+        search_param = ["HEADER", "Message-ID",  msg_id]
+        @logger.debug{"IMAP search string: #{search_param}"}
+        search_result = nil
+        begin
+          search_result = @imap.search(search_param)
+        rescue NoMethodError => ex
+          # there seems to be a bug; if no messages are found, then I get a
+          #   NoMethodError: undefined method `[]' for nil:NilClass
+          # looking into imap.rb it tries to delete the key "SEARCH" from the response which doesn't exist
+          # This maybe due to a bug in imap.rb or due to a bug in the IMAP server I use for testing
+          # anyway, let's recover from it
+          if ex.instance_of?(NoMethodError) && ex.message =~ /\[\].* for nil:NilClass/
+            search_result = nil
+          else
+            # re-raise
+            raise ex
+          end
+        end
+
+        ret_val = !search_result.nil? && search_result.size > 0 ? true : false
+        @logger.debug{"Message with ID #{msg_id} found: #{search_result}"}
+
+        return ret_val
       end
 
       protected
@@ -154,6 +198,18 @@ EOS
         ret_val.gsub!(/\r\n?|\n/, "\r\n")
 
         return ret_val
+      end
+
+      private
+      # Returns a folder name which uses the server specific delimiter; will only work once logged in
+      # @param [String] folder_name the folder name we want to normailize
+      # @returns [String] normalized folder name
+      def normalized_folder_name(folder_name)
+        raise FeedMe::ImapException, "You are not yet logged in" unless @logged_in
+
+        new_folder_name = folder_name.split(HIERARCHY_DELIMITER).join(@imap_delimiter)
+
+        return new_folder_name
       end
     end
   end

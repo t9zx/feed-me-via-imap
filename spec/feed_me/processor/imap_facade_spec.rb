@@ -229,6 +229,70 @@ module FeedMe
           }.to_not raise_error
         end
 
+        context "#message_exists?" do
+          let(:folder_name) {"RSpec/ImapFacadeSpec"}
+          let(:folder_name_unknown) {"RSpec/ImapFacadeSpec/#{UUIDTools::UUID.timestamp_create}"}
+          let(:subject) {"Subject #{Time.now.utc.to_s}"}
+          let(:time) {DateTime.parse("2003-12-13T18:30:02Z")}
+          let(:body) {"Body of the email #{Time.now.utc.to_s}"}
+          let(:msg_id) {"#{UUIDTools::UUID.timestamp_create}@feed-me-via-imap.localhost"}
+          let(:msg_id_unknown) {"#{UUIDTools::UUID.timestamp_create}@feed-me-via-imap.localhost"}
+          before(:each) do
+            @imap = FeedMe::Processor::ImapFacade.new(imap_server, imap_user, imap_pass, imap_port, imap_ssl)
+          end
+
+          it "will return false in case a message is not found" do
+            @imap.login
+            @imap.send(:store_message, folder_name, subject, time, body, msg_id)
+            expect(@imap.send(:message_exists?, folder_name, msg_id_unknown)).to be_false
+          end
+
+          it "will return true in case a message is found" do
+            @imap.login
+            @imap.send(:store_message, folder_name, subject, time, body, msg_id)
+            expect(@imap.send(:message_exists?, folder_name, msg_id)).to be_true
+          end
+
+          context "when incorrect parameters are passed" do
+            it "will complain for incorrect folder_name" do
+              expect {
+                @imap.login
+                @imap.send(:message_exists?, nil, msg_id)
+              }.to raise_error(ArgumentError)
+
+              expect {
+                @imap.send(:message_exists?, 1, msg_id)
+              }.to raise_error(ArgumentError)
+            end
+
+            it "will complain for incorrect msg_id" do
+              expect {
+                @imap.login
+                @imap.send(:message_exists?, folder_name, nil)
+              }.to raise_error(ArgumentError)
+
+              expect {
+                @imap.send(:message_exists?, folder_name, 1)
+              }.to raise_error(ArgumentError)
+            end
+          end
+
+          it "will handle a folder name which doesn't exist on the IMAP" do
+            @imap.login
+            @imap.send(:store_message, folder_name, subject, time, body, msg_id)
+            expect(@imap.send(:message_exists?, folder_name_unknown, msg_id)).to be_false
+          end
+
+
+          it "will complain in case we are not yet logged in" do
+            expect(@imap.logged_in?).to be_false
+            expect {
+              @imap.send(:message_exists?, folder_name, msg_id)
+            }.to raise_error(FeedMe::ImapException)
+            expect(@imap.logged_in?).to be_false
+          end
+        end
+
         context "#create_message" do
           it "returns a valid formatted message" do
             msg_manual = <<EOS
