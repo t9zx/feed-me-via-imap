@@ -299,7 +299,7 @@ module FeedMe
 Subject: #{subject}
 From: sender@localhost
 To: recipient@localhost
-Message-ID: foobar@localhost
+#{FeedMe::Processor::ImapFacade::FEED_ME_IMAP_HEADER}: foobar@localhost
 Date: #{time.rfc2822}
 
 #{body}

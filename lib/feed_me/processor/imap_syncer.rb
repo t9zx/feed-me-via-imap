@@ -48,9 +48,9 @@ EOS
       end
 
       private
-      # Returns a string which can be used as a Message-ID for storing the message on the LDAP
+      # Returns a string which can be used as a FEED_ME_IMAP_HEADER value for storing the message on the LDAP
       # @param [String] msg_id an ID uniquely identifiying the FeedItem
-      # @return [String] a Message-ID which can be used in the email header
+      # @return [String] a FEED_ME_IMAP_HEADER value which can be used in the email header
       def imap_message_id(msg_id)
         return "#{msg_id}@feed-me-via-imap.localhost"
       end

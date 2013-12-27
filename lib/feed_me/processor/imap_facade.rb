@@ -11,6 +11,7 @@ module FeedMe
   module Processor
     class ImapFacade
       HIERARCHY_DELIMITER = '/'
+      FEED_ME_IMAP_HEADER = 'X-Feed-Me-ID'
 
       # Synchronizes a given Feed (with it's FeedItems) with an IMAP Server
       # Synchronization is one way only; if there is a FeedItem which is not yet on the IMAP server, then we will store
@@ -132,9 +133,9 @@ module FeedMe
         end
       end
 
-      # Determines if a message identified by it's Message-ID exists in the given folder
+      # Determines if a message identified by it's FEED_ME_IMAP_HEADER header exists in the given folder
       # @param [String] folder_name then name of the folder where the message is stored
-      # @param [String] msg_id the Message-ID to identify the message
+      # @param [String] msg_id the FEED_ME_IMAP_HEADER value to identify the message
       # @throws [ArgumentError] in case the passed parameters are not proper
       # @return [Boolean] true if such a message was found; false if not found
       def message_exists?(folder_name, msg_id)
@@ -152,7 +153,7 @@ module FeedMe
         end
 
         @imap.select(normalized_folder_name(folder_name))
-        search_param = ["HEADER", "Message-ID",  msg_id]
+        search_param = ["HEADER", FEED_ME_IMAP_HEADER,  msg_id]
         @logger.debug{"IMAP search string: #{search_param}"}
         search_result = nil
         begin
@@ -190,7 +191,7 @@ module FeedMe
 Subject: #{subject}
 From: #{from}
 To: #{to}
-Message-ID: #{msg_id}
+#{FEED_ME_IMAP_HEADER}: #{msg_id}
 Date: #{time.rfc2822}
 
 #{body}
