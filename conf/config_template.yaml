@@ -8,7 +8,7 @@ imap:
 feeds:
   -
     url: http://www.heise.de/newsticker/heise-atom.xml
-    storage: News.Heise.Atom
+    folder: News.Heise.Atom
   -
     url: http://www.heise.de/newsticker/heise.rdf
-    storage: News.Heise.RDF
+    folder: News.Heise.RDF
