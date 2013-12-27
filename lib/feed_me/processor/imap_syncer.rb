@@ -16,7 +16,17 @@ module FeedMe
       # @param [String] folder_name the folder where to store the item
       def store_item(feed_item, folder_name)
         @logger.info{"Storing item #{feed_item} at #{folder_name}"}
-        store_message(folder_name, feed_item.title, feed_item.ts, format_feed_item_body(feed_item), "#{feed_item.msg_id}@feed-me-via-imap.localhost")
+        if message_exists?(normalized_folder_name(folder_name), imap_message_id(feed_item.msg_id))
+          @logger.debug{"Message already exists on the IMAP server, skipping message"}
+        else
+          store_message(folder_name,
+                        feed_item.title,
+                        feed_item.ts,
+                        format_feed_item_body(feed_item),
+                        imap_message_id(feed_item.msg_id))
+
+          @logger.debug{"Item #{feed_item} successfully saved"}
+        end
       end
 
       protected
@@ -35,6 +45,14 @@ Title: #{feed_item.title}
 EOS
 
         return ret_val
+      end
+
+      private
+      # Returns a string which can be used as a Message-ID for storing the message on the LDAP
+      # @param [String] msg_id an ID uniquely identifiying the FeedItem
+      # @return [String] a Message-ID which can be used in the email header
+      def imap_message_id(msg_id)
+        return "#{msg_id}@feed-me-via-imap.localhost"
       end
     end
   end
