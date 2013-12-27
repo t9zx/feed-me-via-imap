@@ -35,6 +35,8 @@ module FeedMe
         @msg_id = msg_id
         @ts = ts
 
+        @feed.add_feed_item(self)
+
         @logger.debug{"Created new FeedItem: #{self.to_s}"}
       end
 

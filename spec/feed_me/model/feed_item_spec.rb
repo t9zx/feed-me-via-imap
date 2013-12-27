@@ -14,9 +14,11 @@ module FeedMe
       end
 
       it "can be instantiated" do
+        fi = nil
         lambda {
-          FeedMe::Model::FeedItem.new(@feed, "title", "body", URI("http://localhost/foo"), "12345", DateTime.now)
+          fi = FeedMe::Model::FeedItem.new(@feed, "title", "body", URI("http://localhost/foo"), "12345", DateTime.now)
         }.should_not raise_error
+        expect(@feed.feed_items).to include(fi)
       end
 
       it "should complain when the passed paramters aren't proper ones" do
