@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'bundler/setup'
 
+require 'date'
 require "uri"
 
 module FeedMe
@@ -15,13 +16,15 @@ module FeedMe
       # @param [String] body the body of the feed item
       # @param [URI] uri the URI where the complete item is accessible
       # @param [String] msg_id a unique ID (for the this feed) which uniquely identified this item
+      # @param [DateTime] ts the time stamp/data/time when this article was created
       # @throws [ArgumentError] in case the passed parameters are suitable
-      def initialize(feed, title, body, uri, msg_id)
+      def initialize(feed, title, body, uri, msg_id, ts)
         raise ArgumentError, "feed must be Feed instance" unless feed.is_a?(FeedMe::Model::Feed)
         raise ArgumentError, "title must be a String" unless title.is_a?(String)
         raise ArgumentError, "body must be a String" unless body.is_a?(String)
         raise ArgumentError, "uri must be a URI" unless uri.is_a?(URI)
         raise ArgumentError, "msg_id must be a String" unless msg_id.is_a?(String)
+        raise ArgumentError, "msg_id must be a Time" unless ts.is_a?(DateTime)
 
         @logger = FeedMe::Utils::Logger.get(self.class)
 
@@ -30,6 +33,7 @@ module FeedMe
         @body = body
         @uri = uri
         @msg_id = msg_id
+        @ts = ts
 
         @logger.debug{"Created new FeedItem: #{self.to_s}"}
       end
