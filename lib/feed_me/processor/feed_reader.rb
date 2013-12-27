@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'bundler/setup'
 
+require "date"
 require "uri"
 require "net/http"
 require "net/https"
@@ -11,6 +12,8 @@ require_relative "../utils/logger"
 
 require_relative "../model/feed"
 require_relative "../model/feed_item"
+
+require_relative "../utils/parse_utils"
 
 require_relative "../exceptions/parsing_exception"
 
@@ -114,12 +117,13 @@ module FeedMe
 
         # iterate over each entry, extract the interesting information
         feed_xml.xpath('/rss/channel/item').each do |item|
-          title = safe_xpath_text(item, './title', 'Unknown Title')
-          body = safe_xpath_text(item, './description', 'No description given.')
-          uri = URI(safe_xpath_text(item, './link', ''))
-          msg_id = safe_xpath_text(item, './guid', '')
+          title = FeedMe::Utils::ParseUtils.safe_xpath_text(item, './title', 'Unknown Title')
+          body = FeedMe::Utils::ParseUtils.safe_xpath_text(item, './description', 'No description given.')
+          uri = URI(FeedMe::Utils::ParseUtils.safe_xpath_text(item, './link', ''))
+          msg_id = FeedMe::Utils::ParseUtils.safe_xpath_text(item, './guid', '')
+          ts = FeedMe::Utils::ParseUtils.safe_parse_datetime(FeedMe::Utils::ParseUtils.safe_xpath_text(item, './pubDate', DateTime.now))
 
-          create_feed_item(feed, title, body, uri, msg_id)
+          create_feed_item(feed, title, body, uri, msg_id, ts)
         end
       end
 
@@ -132,12 +136,13 @@ module FeedMe
 
         # iterate over each entry, extract the interesting information
         feed_xml.xpath('/feed/entry').each do |item|
-          title = safe_xpath_text(item, './title', 'Unknown Title')
-          body = safe_xpath_text(item, './summary', 'No description given.')
-          uri = URI(safe_xpath_text(item, './link', ''))
-          msg_id = safe_xpath_text(item, './id', '')
+          title = FeedMe::Utils::ParseUtils.safe_xpath_text(item, './title', 'Unknown Title')
+          body = FeedMe::Utils::ParseUtils.safe_xpath_text(item, './summary', 'No description given.')
+          uri = URI(FeedMe::Utils::ParseUtils.safe_xpath_text(item, './link', ''))
+          msg_id =FeedMe::Utils::ParseUtils. safe_xpath_text(item, './id', '')
+          ts = FeedMe::Utils::ParseUtils.safe_parse_datetime(FeedMe::Utils::ParseUtils.safe_xpath_text(item, './updated', DateTime.now))
 
-          create_feed_item(feed, title, body, uri, msg_id)
+          create_feed_item(feed, title, body, uri, msg_id, ts)
         end
       end
 
@@ -145,38 +150,27 @@ module FeedMe
       # Creates a FeedItem with the given information; in case the msg_id is an empty string or nil, then a UUID will be
       # generated
       # @param [FeedMe::Model::Feed] feed the feed used
+      # @param [String] title
+      # @param [String] body
+      # @param [URI] uri
+      # @param [String] msg_id
+      # @param [Time] ts
       # @returns [FeedMe::Model::FeedItem] the FeedItem created
-      def self.create_feed_item(feed, title, body, uri, msg_id)
+      def self.create_feed_item(feed, title, body, uri, msg_id, ts)
         logger = FeedMe::Utils::Logger.get(self)
 
         if msg_id.empty?
+          # TODO - check if makes sense to created the msg_id based on the title to avoid creating the same records over and over again on the IMAP
           logger.warn{"Unable to retrieve a guid for #{item.to_s} - generating one on my own"}
           msg_id = UUIDTools::UUID.timestamp_create.to_s
         end
 
-        ret_val = FeedMe::Model::FeedItem.new(feed, title, body, uri, msg_id)
+        ret_val = FeedMe::Model::FeedItem.new(feed, title, body, uri, msg_id, ts)
 
         return ret_val
       end
 
-      # Returns the text content of the node specified by xpath from xml
-      # @param [Nokogiri::XML::Element, Nokogiri::XML::Document, Nokogiri::HTML::Document] the XML document
-      # @param [String] xpath the XPath to retrieve
-      # @param [String] default_value returned in case the Xpath is not found
-      # @return [String] the text found or the default value in case the node was not found
-      def self.safe_xpath_text(xml, xpath, default_value)
-        logger = FeedMe::Utils::Logger.get(self)
 
-        ret_val = nil
-        begin
-          ret_val = (val = xml.xpath(xpath)[0]).nil? ? default_value : val.text
-        rescue Exception => ex
-          logger.error{"Exception caught while getting element: #{ex.message}#{$/}#{ex.backtrace.join($/)}"}
-          ret_val = default_value
-        end
-
-        return ret_val
-      end
     end
   end
 end

@@ -85,6 +85,10 @@ module FeedMe
         expect(xml.xpath('//item/title')).to have(2).elements
       end
 
+      pending "#safe_parse_datetime" do
+
+      end
+
     end
   end
 end

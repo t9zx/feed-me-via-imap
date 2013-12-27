@@ -3,6 +3,8 @@ require_relative "../../spec_helper"
 require_relative "../../../lib/feed_me/config/config"
 require_relative "../../../lib/feed_me/processor/imap_syncer"
 
+require "date"
+
 module FeedMe
   module Processor
     describe ImapSyncer do
@@ -24,7 +26,7 @@ module FeedMe
       context "when handling a FeedItem" do
         before do
           @feed = FeedMe::Model::Feed.new(URI("http://localhost"))
-          @feed_item = FeedMe::Model::FeedItem.new(@feed, "title", "body", URI("http://localhost/foo"), "12345")
+          @feed_item = FeedMe::Model::FeedItem.new(@feed, "title", "body", URI("http://localhost/foo"), "12345", DateTime.now)
           @folder = "RSpec/ImapSyncerSpec"
         end
 
