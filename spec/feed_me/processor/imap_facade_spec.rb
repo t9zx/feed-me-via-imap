@@ -76,13 +76,18 @@ module FeedMe
 
       end
 
-      it "will complain in case we want to open an SSL connection" do
-        expect {
-          FeedMe::Processor::ImapFacade.new(imap_server, imap_user, imap_pass, imap_port, true)
-        }.to raise_error(FeedMe::FeedMeError)
-      end
+      #it "will complain in case we want to open an SSL connection" do
+      #  expect {
+      #    FeedMe::Processor::ImapFacade.new(imap_server, imap_user, imap_pass, imap_port, true)
+      #  }.to raise_error(FeedMe::FeedMeError)
+      #end
 
-      pending "supports SSL connections as well" do
+      it "supports SSL connections as well" do
+        expect {
+          imap_facade = FeedMe::Processor::ImapFacade.new(imap_server, imap_user, imap_pass, 993, true)
+          imap_facade.login
+          imap_facade.logout
+        }.to_not raise_error()
       end
 
       context "when handling logins" do

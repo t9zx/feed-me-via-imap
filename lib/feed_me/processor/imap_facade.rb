@@ -30,8 +30,6 @@ module FeedMe
         raise ArgumentError, "imap_port is supposed to be not nil and of type Integer (got: '#{imap_port.class.to_s}')" unless !imap_port.nil? && imap_port.kind_of?(Integer)
         raise ArgumentError, "imap_ssl is supposed to be not nil and of type Boolean" unless !imap_ssl.nil? && (imap_ssl.instance_of?(TrueClass) || imap_ssl.instance_of?(FalseClass))
 
-        raise FeedMe::FeedMeError, "SSL support not yet available" if imap_ssl
-
         @logger = FeedMe::Utils::Logger.get(self.class)
         @logged_in = false
 
@@ -50,7 +48,7 @@ module FeedMe
         begin
           imap_info = "IMAP server #{@imap_server}:#{@imap_port} with user #{@imap_user}, SSL enabled: #{@imap_ssl.to_s}"
           @logger.info{"Connecting to #{imap_info}"}
-          @imap = Net::IMAP.new(@imap_server, @imap_port)
+          @imap = Net::IMAP.new(@imap_server, {:port => @imap_port, :ssl => @imap_ssl})
           @imap.authenticate("CRAM-MD5", @imap_user, @imap_password)
           @logger.info{"Successfully connected to IMAP server: #{imap_info}"}
           @logger.debug{"IMAP servers greeting: #{@imap.greeting}"}
