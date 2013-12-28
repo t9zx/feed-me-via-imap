@@ -1,0 +1,14 @@
+imap:
+  server: imap_server
+  port: 143
+  ssl: false
+  user: imap_user
+  password: imap_password
+
+feeds:
+  -
+    url: http://www.heise.de/newsticker/heise-atom.xml
+    folder: News.Heise.Atom
+  -
+    url: http://www.heise.de/newsticker/heise.rdf
+    folder: News.Heise.RDF
