@@ -8,7 +8,7 @@
   <!-- Outputters -->
   <outputter name="console" type="StdoutOutputter">
     <formatter type="Log4r::PatternFormatter">
-      <pattern>[%5l %d] %-40.40C %M [%t]</pattern>
+      <pattern>%d %-5l %-40.40C %M [%t]</pattern>
     </formatter>
   </outputter>
 
