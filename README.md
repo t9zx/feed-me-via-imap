@@ -59,3 +59,7 @@ Version History
 1.0.0: Initial version
 * Feeds are synced
 * Config file support
+
+1.1.0: Under development, planned:
+* Proper handling of HTML fragments in the email message
+* YAML describing which feeds to sync shall come from a DRAFT folder on the IMAP server; thus no need to edit a config file anymore to update the feeds

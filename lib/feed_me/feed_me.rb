@@ -10,7 +10,7 @@ require_relative "processor/imap_syncer"
 
 module FeedMe
   class FeedMeNow
-    FEED_ME_VERSION = "1.0.0"
+    FEED_ME_VERSION = "1.1.0"
 
     def initialize
       logger = FeedMe::Utils::Logger.get(self.class.to_s)
