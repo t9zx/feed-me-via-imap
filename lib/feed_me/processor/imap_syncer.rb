@@ -37,11 +37,10 @@ module FeedMe
         raise ArgumentError, "feed_item must not be nil and of type FeedMe::Model::FeedItem (got: '#{feed_item.class.to_s}'" unless !feed_item.nil? && feed_item.instance_of?(FeedMe::Model::FeedItem)
 
         ret_val = <<EOS
-URL: #{feed_item.uri.to_s}
-
-Title: #{feed_item.title}
-
-#{feed_item.body}
+<p>URL: <a href="#{feed_item.uri.to_s}">#{feed_item.uri.to_s}</a></p>
+<p>Title: #{feed_item.title}</p>
+<br/>
+<p>#{feed_item.body}</p>
 EOS
 
         return ret_val

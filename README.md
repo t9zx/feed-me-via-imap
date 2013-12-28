@@ -53,6 +53,11 @@ Caveats
 * Handling of special characters (e.g. German umlauts) are not properly handled in the message body
 * HTML formatted feed information is shown as plain text in the message
 
+Reference Information
+=====================
+
+* http://tools.ietf.org/html/rfc3501
+
 Version History
 ===============
 

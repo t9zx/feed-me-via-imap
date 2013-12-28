@@ -191,6 +191,7 @@ From: #{from}
 To: #{to}
 #{FEED_ME_IMAP_HEADER}: #{msg_id}
 Date: #{time.rfc2822}
+Content-Type: text/html;charset="utf-8";
 
 #{body}
 EOS
